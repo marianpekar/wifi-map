@@ -14,11 +14,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'pug');
 
 // Expose the Leaflet 'dist' directory
 app.use('/leaflet', express.static(path.join(__dirname, 'node_modules', 'leaflet', 'dist')));
-
-app.set('view engine', 'pug');
 
 // Setup MongoDB
 const client = new MongoClient(process.env.MONGODB_URL);
@@ -33,11 +32,10 @@ const networksCol = db.collection('networks');
 // Setup Routes
 app.get('/', async (req, res) => {
     try {
-        const networks = await networksCol.find().toArray();
-        res.render('index', {networks});
+        res.render('index');
     } catch (error) {
-        console.error("Error fetching networks:", error);
-        res.status(500).send("Error retrieving networks data");
+        console.error("Failed to render index:", error);
+        res.status(500).send("Server error");
     }
 });
 
