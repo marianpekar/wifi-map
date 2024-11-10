@@ -70,20 +70,17 @@ function updateTable(networks) {
         tableBody.appendChild(row);
 
         const checkbox = row.querySelector('input[type="checkbox"]');
-        checkbox.onclick = (e) => handleCheckboxClick(e, networkId);
+        checkbox.onChangeHandler = (checked) => {
+            if (checked) {
+                selectedNetworks.add(networkId);
+                addMarkers(networkId);
+            } else {
+                selectedNetworks.delete(networkId);
+                removeMarkers(networkId);
+            }
+        }
+        checkbox.onchange = (e) => checkbox.onChangeHandler(e.target.checked);
     });
-
-    console.log(networks);
-}
-
-function handleCheckboxClick(e, networkId) {
-    if (e.target.checked) {
-        selectedNetworks.add(networkId);
-        addMarkers(networkId);
-    } else {
-        selectedNetworks.delete(networkId);
-        removeMarkers(networkId);
-    }
 }
 
 function addMarkers(networkId) {
@@ -110,4 +107,14 @@ map.on('moveend', async () => {
 window.onload = async () => {
     const networks = await fetchNetworksInBounds();
     updateTable(networks);
+};
+
+document.getElementById("checkbox-all").onchange = (e) => {
+    const tableBody = document.getElementById('network-table');
+    const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
+
+    Array.from(checkboxes).forEach(checkbox => {         
+        checkbox.checked = e.target.checked;
+        checkbox.onChangeHandler(checkbox.checked);
+    });
 };
