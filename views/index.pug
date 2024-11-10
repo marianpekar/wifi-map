@@ -1,0 +1,22 @@
+﻿doctype html
+html
+    head
+        title Wi-Fi Networks Map
+        link(rel="stylesheet", href="leaflet/leaflet.css")
+        link(rel="stylesheet" href="css/style.css")
+    body
+
+        div#map
+
+        table
+            thead
+                tr
+                    th.checkbox-column Show
+                    th SSID
+                    th BSSID
+                    th Frequency
+                    th Capabilities
+            tbody#network-table
+
+        script(src="leaflet/leaflet.js")
+        script(src="js/map.js" type="application/javascript")
