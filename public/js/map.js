@@ -95,29 +95,25 @@ async function addMarkers(networkId) {
     if (!networkMarkers[networkId]) {
         const network = await fetchNetworkQueued(networkId);
         const networkColor = getColorFromBSSID(network.Bssid);
-        networkMarkers[networkId] = network.Levels.map(level =>
-            L.circleMarker([level.Latitude, level.Longitude], {
+        networkMarkers[networkId] =
+            L.circleMarker([network.Latitude, network.Longitude], {
                 radius: 5,
                 color: networkColor,
                 fillColor: networkColor,
                 fillOpacity: 0.8
-            }).bindTooltip(`${network.Ssid} ${level.Power}`)
-        );
+            }).bindTooltip(`${network.Ssid}`);
     }
     
-    networkMarkers[networkId].forEach(marker => {
-        if (!overlayLayer.hasLayer(marker)) {
-            overlayLayer.addLayer(marker);
-        }
-    });
+    if (!overlayLayer.hasLayer(networkMarkers[networkId])) {
+        overlayLayer.addLayer(networkMarkers[networkId]);
+    }
+    
 }
 
 function removeMarkers(networkId) {
-    networkMarkers[networkId].forEach(marker => {
-        if (overlayLayer.hasLayer(marker)) {
-            overlayLayer.removeLayer(marker);
-        }
-    });
+    if (overlayLayer.hasLayer(networkMarkers[networkId])) {
+        overlayLayer.removeLayer(networkMarkers[networkId]);
+    }
 }
 
 map.on('moveend', async () => {

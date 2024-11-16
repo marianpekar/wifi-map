@@ -46,17 +46,13 @@ app.get('/networks', async (req, res) => {
         const networks = await networksCol.aggregate([
             {
                 $match: {
-                    "Levels": {
-                        "$elemMatch": {
-                            "Latitude": {
-                                "$gte": parseFloat(swLat),
-                                "$lte": parseFloat(neLat)
-                            },
-                            "Longitude": {
-                                "$gte": parseFloat(swLng),
-                                "$lte": parseFloat(neLng)
-                            }
-                        }
+                    Latitude: {
+                        $gte: parseFloat(swLat),
+                        $lte: parseFloat(neLat)
+                    },
+                    Longitude: {
+                        $gte: parseFloat(swLng),
+                        $lte: parseFloat(neLng)
                     }
                 }
             },
