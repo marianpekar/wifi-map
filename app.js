@@ -1,7 +1,7 @@
 import path from 'path';
 import express from 'express';
 import dotenv from 'dotenv';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -42,28 +42,57 @@ app.get('/', async (req, res) => {
 app.get('/networks', async (req, res) => {
     try {
         const { swLat, swLng, neLat, neLng } = req.query;
-        const networks = await networksCol.find({
-            "Levels": {
-                "$elemMatch": {
-                    "Latitude": {
-                        "$gte": parseFloat(swLat),
-                        "$lte": parseFloat(neLat)
-                    },
-                    "Longitude": {
-                        "$gte": parseFloat(swLng),
-                        "$lte": parseFloat(neLng)
+
+        const networks = await networksCol.aggregate([
+            {
+                $match: {
+                    "Levels": {
+                        "$elemMatch": {
+                            "Latitude": {
+                                "$gte": parseFloat(swLat),
+                                "$lte": parseFloat(neLat)
+                            },
+                            "Longitude": {
+                                "$gte": parseFloat(swLng),
+                                "$lte": parseFloat(neLng)
+                            }
+                        }
                     }
                 }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    Bssid: 1,
+                    Ssid: 1,
+                    Frequency: 1,
+                    Capabilities: 1
+                }
             }
-        }).toArray();
+        ]).toArray();
 
         res.json(networks);
-        
+
     } catch (error) {
         console.error("Error fetching networks:", error);
         res.status(500).send("Error retrieving networks data");
     }
 });
+
+app.get('/network/:id', async (req, res) => {
+    try {
+        const network = await networksCol.findOne({ _id: new ObjectId(req.params.id) });
+        if (network) {
+            res.json(network);
+        } else {
+            res.sendStatus(404).send("Network not found");
+        }
+    } catch {
+        console.error("Error fetching network:", error);
+        res.status(500).send("Error retrieving network data");
+    }
+});
+
 
 // Start Server
 const PORT = process.env.PORT || 3000;

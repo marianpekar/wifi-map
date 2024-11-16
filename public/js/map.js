@@ -1,4 +1,6 @@
-﻿const map = L.map('map').setView([49.204, 16.605], 14);
+﻿const fetchQueue = new RequestQueue(5);
+
+const map = L.map('map').setView([49.204, 16.605], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -40,25 +42,30 @@ async function fetchNetworksInBounds() {
     }
 }
 
+async function fetchNetworkQueued(id) {
+    return await fetchQueue.add(() => fetchNetwork(id));
+}
+
+async function fetchNetwork(id) {
+    try {
+        const response = await fetch(`/network/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching networks:", error);
+    }
+}
+
 function updateTable(networks) {
     const tableBody = document.getElementById('network-table');
     tableBody.innerHTML = '';
 
     networks.forEach(network => {
         const networkId = network._id;
-
-        if (!networkMarkers[networkId]) {
-            const networkColor = getColorFromBSSID(network.Bssid);
-            networkMarkers[networkId] = network.Levels.map(level =>
-                L.circleMarker([level.Latitude, level.Longitude], {
-                    radius: 5,
-                    color: networkColor,
-                    fillColor: networkColor,
-                    fillOpacity: 0.8
-                }).bindTooltip(`${network.Ssid} ${level.Power}`)
-            );
-        }
-
+        
         const row = document.createElement('tr');
         row.innerHTML = `
              <td class="text-center"><input type="checkbox" data-network-id="${networkId}" ${selectedNetworks.has(networkId) ? 'checked' : ''}></td>
@@ -70,10 +77,10 @@ function updateTable(networks) {
         tableBody.appendChild(row);
 
         const checkbox = row.querySelector('input[type="checkbox"]');
-        checkbox.onChangeHandler = (checked) => {
+        checkbox.onChangeHandler = async (checked) => {
             if (checked) {
                 selectedNetworks.add(networkId);
-                addMarkers(networkId);
+                await addMarkers(networkId);
             } else {
                 selectedNetworks.delete(networkId);
                 removeMarkers(networkId);
@@ -83,7 +90,21 @@ function updateTable(networks) {
     });
 }
 
-function addMarkers(networkId) {
+async function addMarkers(networkId) {
+
+    if (!networkMarkers[networkId]) {
+        const network = await fetchNetworkQueued(networkId);
+        const networkColor = getColorFromBSSID(network.Bssid);
+        networkMarkers[networkId] = network.Levels.map(level =>
+            L.circleMarker([level.Latitude, level.Longitude], {
+                radius: 5,
+                color: networkColor,
+                fillColor: networkColor,
+                fillOpacity: 0.8
+            }).bindTooltip(`${network.Ssid} ${level.Power}`)
+        );
+    }
+    
     networkMarkers[networkId].forEach(marker => {
         if (!overlayLayer.hasLayer(marker)) {
             overlayLayer.addLayer(marker);
