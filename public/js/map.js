@@ -129,7 +129,10 @@ function updateMarkers(networks) {
                     color: networkColor,
                     fillColor: networkColor,
                     fillOpacity: 0.8
-                }).bindTooltip(`${network.Ssid} (${network.Bssid})`);
+                }).bindTooltip(`SSID: ${network.Ssid}<br>
+                    BSSID: ${network.Bssid}<br>
+                    Frequency: ${network.Frequency} MHz<br>
+                    Capabilities: ${network.Capabilities}`);
         }
     })
 }
