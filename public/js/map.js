@@ -54,10 +54,11 @@ function updateTable(networks) {
             <td>${network.Frequency} MHz</td>
             <td>${network.Capabilities}</td>
         `;
+        
         tableBody.appendChild(row);
 
         const checkbox = row.querySelector('input[type="checkbox"]');
-        checkbox.onChangeHandler = async (checked) => {
+        checkbox.onChangeHandler = (checked) => {
             if (checked) {
                 selectedNetworks.add(network._id);
                 addMarkers(network._id);
@@ -67,6 +68,20 @@ function updateTable(networks) {
             }
         }
         checkbox.onchange = (e) => checkbox.onChangeHandler(e.target.checked);
+
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        row.addEventListener('click', () => {
+            if (network.Latitude && network.Longitude) {
+                checkbox.checked = true;
+                checkbox.onChangeHandler(checkbox.checked);
+                map.setView([network.Latitude, network.Longitude], 19);
+            }
+        });
+
+        row.style.cursor = 'pointer';
     });
 }
 
