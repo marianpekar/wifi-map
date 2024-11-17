@@ -8,6 +8,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const overlayLayer = L.layerGroup().addTo(map);
 const networkMarkers = {};
 const selectedNetworks = new Set();
+const defaultMarkerSize = 5;
+const onHoverMarkerSize = 10;
+let currentOnHoverMarker = null;
+let currentOnHoverRow = null;
 
 function getColorFromBSSID(bssid) {
     let hash = 0;
@@ -46,7 +50,7 @@ function updateTable(networks) {
 
     networks.forEach(network => {
         const row = document.createElement('tr');
-        
+
         row.innerHTML = `
             <td class="text-center"><input type="checkbox" data-network-id="${network._id}" ${selectedNetworks.has(network._id) ? 'checked' : ''}></td>
             <td>${network.Ssid}</td>
@@ -54,17 +58,17 @@ function updateTable(networks) {
             <td>${network.Frequency} MHz</td>
             <td>${network.Capabilities}</td>
         `;
-        
+
         tableBody.appendChild(row);
 
         const checkbox = row.querySelector('input[type="checkbox"]');
         checkbox.onChangeHandler = (checked) => {
             if (checked) {
                 selectedNetworks.add(network._id);
-                addMarkers(network._id);
+                addMarker(network._id);
             } else {
                 selectedNetworks.delete(network._id);
-                removeMarkers(network._id);
+                removeMarker(network._id);
             }
         }
         checkbox.onchange = (e) => checkbox.onChangeHandler(e.target.checked);
@@ -72,13 +76,43 @@ function updateTable(networks) {
         checkbox.addEventListener('click', (e) => {
             e.stopPropagation();
         });
-        
+
         row.addEventListener('click', () => {
             if (network.Latitude && network.Longitude) {
                 checkbox.checked = true;
                 checkbox.onChangeHandler(checkbox.checked);
                 map.setView([network.Latitude, network.Longitude], 19);
             }
+        });
+
+        row.addEventListener('mouseover', () => {
+            if (networkMarkers[network._id]) {
+                if (currentOnHoverRow != null) {
+                    currentOnHoverRow.style.background = "#fff"
+                }
+                currentOnHoverRow = row;
+                currentOnHoverRow.style.background = networkMarkers[network._id].options.color
+
+                if (currentOnHoverMarker) {
+                    currentOnHoverMarker.setStyle({
+                        radius: defaultMarkerSize
+                    });
+                }
+                currentOnHoverMarker = networkMarkers[network._id];
+                currentOnHoverMarker.setStyle({
+                    radius: onHoverMarkerSize
+                });
+            }
+        });
+
+        row.addEventListener('mouseout', () => {
+            if (networkMarkers[network._id]) {
+                networkMarkers[network._id].setStyle({
+                    radius: defaultMarkerSize
+                });
+            }
+
+            row.style.background = "#fff"
         });
 
         row.style.cursor = 'pointer';
@@ -91,22 +125,22 @@ function updateMarkers(networks) {
             const networkColor = getColorFromBSSID(network.Bssid);
             networkMarkers[network._id] =
                 L.circleMarker([network.Latitude, network.Longitude], {
-                    radius: 5,
+                    radius: defaultMarkerSize,
                     color: networkColor,
                     fillColor: networkColor,
                     fillOpacity: 0.8
                 }).bindTooltip(`${network.Ssid} (${network.Bssid})`);
         }
-    })    
+    })
 }
 
-function addMarkers(networkId) {
+function addMarker(networkId) {
     if (!overlayLayer.hasLayer(networkMarkers[networkId])) {
         overlayLayer.addLayer(networkMarkers[networkId]);
     }
 }
 
-function removeMarkers(networkId) {
+function removeMarker(networkId) {
     if (overlayLayer.hasLayer(networkMarkers[networkId])) {
         overlayLayer.removeLayer(networkMarkers[networkId]);
     }
@@ -130,7 +164,7 @@ document.getElementById("checkbox-all").onchange = (e) => {
     const tableBody = document.getElementById('network-table');
     const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
 
-    Array.from(checkboxes).forEach(checkbox => {         
+    Array.from(checkboxes).forEach(checkbox => {
         checkbox.checked = e.target.checked;
         checkbox.onChangeHandler(checkbox.checked);
     });
