@@ -60,7 +60,7 @@ function updateTable(networks) {
         checkbox.onChangeHandler = async (checked) => {
             if (checked) {
                 selectedNetworks.add(network._id);
-                await addMarkers(network._id);
+                addMarkers(network._id);
             } else {
                 selectedNetworks.delete(network._id);
                 removeMarkers(network._id);
@@ -85,7 +85,7 @@ function updateMarkers(networks) {
     })    
 }
 
-async function addMarkers(networkId) {
+function addMarkers(networkId) {
     if (!overlayLayer.hasLayer(networkMarkers[networkId])) {
         overlayLayer.addLayer(networkMarkers[networkId]);
     }
