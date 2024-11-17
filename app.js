@@ -56,15 +56,6 @@ app.get('/networks', async (req, res) => {
                     }
                 }
             },
-            {
-                $project: {
-                    _id: 1,
-                    Bssid: 1,
-                    Ssid: 1,
-                    Frequency: 1,
-                    Capabilities: 1
-                }
-            }
         ]).toArray();
 
         res.json(networks);
@@ -74,21 +65,6 @@ app.get('/networks', async (req, res) => {
         res.status(500).send("Error retrieving networks data");
     }
 });
-
-app.get('/network/:id', async (req, res) => {
-    try {
-        const network = await networksCol.findOne({ _id: new ObjectId(req.params.id) });
-        if (network) {
-            res.json(network);
-        } else {
-            res.sendStatus(404).send("Network not found");
-        }
-    } catch {
-        console.error("Error fetching network:", error);
-        res.status(500).send("Error retrieving network data");
-    }
-});
-
 
 // Start Server
 const PORT = process.env.PORT || 3000;
